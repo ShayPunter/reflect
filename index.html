@@ -808,10 +808,10 @@
                             ${new Date(entry.date).toLocaleDateString()}
                             <button class="btn btn-secondary btn-small" onclick="app.deleteEntry(${index})">Delete</button>
                         </div>
-                        ${entry.wentWell ? `<div class="entry-item"><div class="entry-label">Went well</div><div class="entry-text">${entry.wentWell}</div></div>` : ''}
-                        ${entry.didntGoWell ? `<div class="entry-item"><div class="entry-label">Didn't go well</div><div class="entry-text">${entry.didntGoWell}</div></div>` : ''}
+                        ${(entry.wentWell || entry.went_well) ? `<div class="entry-item"><div class="entry-label">Went well</div><div class="entry-text">${entry.wentWell || entry.went_well}</div></div>` : ''}
+                        ${(entry.didntGoWell || entry.didnt_go_well) ? `<div class="entry-item"><div class="entry-label">Didn't go well</div><div class="entry-text">${entry.didntGoWell || entry.didnt_go_well}</div></div>` : ''}
                         ${entry.surprises ? `<div class="entry-item"><div class="entry-label">Surprises</div><div class="entry-text">${entry.surprises}</div></div>` : ''}
-                        ${entry.nextTime ? `<div class="entry-item"><div class="entry-label">Next time</div><div class="entry-text">${entry.nextTime}</div></div>` : ''}
+                        ${(entry.nextTime || entry.next_time) ? `<div class="entry-item"><div class="entry-label">Next time</div><div class="entry-text">${entry.nextTime || entry.next_time}</div></div>` : ''}
                     </div>
                 `).join('');
         }
