@@ -16,11 +16,34 @@ class ReflectionAPI {
     private $logFile;
 
     public function __construct() {
-        $this->logFile = __DIR__ . '/reflection_logs.txt';
+        $this->setupLogging();
         $this->log('API Request started', ['method' => $_SERVER['REQUEST_METHOD'], 'uri' => $_SERVER['REQUEST_URI']]);
 
         $this->connectDB();
         $this->createTables();
+    }
+
+    private function setupLogging() {
+        $logDir = __DIR__ . '/storage/logs';
+
+        // Create directories if they don't exist
+        if (!is_dir($logDir)) {
+            if (!mkdir($logDir, 0755, true)) {
+                error_log('Failed to create log directory: ' . $logDir);
+                $this->logFile = __DIR__ . '/reflection_logs.txt'; // Fallback
+                return;
+            }
+        }
+
+        // Create daily log files
+        $today = date('Y-m-d');
+        $this->logFile = $logDir . '/reflections-' . $today . '.log';
+
+        // Ensure log file is writable
+        if (!file_exists($this->logFile)) {
+            touch($this->logFile);
+            chmod($this->logFile, 0644);
+        }
     }
 
     private function log($message, $data = null) {
@@ -28,12 +51,15 @@ class ReflectionAPI {
         $logEntry = "[$timestamp] $message";
 
         if ($data) {
-            $logEntry .= ' | Data: ' . json_encode($data);
+            $logEntry .= ' | Data: ' . json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         }
 
         $logEntry .= PHP_EOL;
 
-        file_put_contents($this->logFile, $logEntry, FILE_APPEND | LOCK_EX);
+        // Write to log file with error handling
+        if (!file_put_contents($this->logFile, $logEntry, FILE_APPEND | LOCK_EX)) {
+            error_log('Failed to write to log file: ' . $this->logFile);
+        }
     }
 
     private function connectDB() {
