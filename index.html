@@ -597,9 +597,10 @@
         }
 
         async saveReflection() {
+            const now = new Date();
             const data = {
-                date: new Date().toISOString(),
-                dateString: new Date().toDateString(),
+                date: now.toISOString().split('.')[0] + 'Z', // Remove milliseconds
+                dateString: now.toDateString(),
                 wentWell: document.getElementById('wentWell').value,
                 didntGoWell: document.getElementById('didntGoWell').value,
                 surprises: document.getElementById('surprises').value,
