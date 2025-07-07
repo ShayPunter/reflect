@@ -13,10 +13,27 @@ require_once 'config.php';
 
 class ReflectionAPI {
     private $db;
+    private $logFile;
 
     public function __construct() {
+        $this->logFile = __DIR__ . '/reflection_logs.txt';
+        $this->log('API Request started', ['method' => $_SERVER['REQUEST_METHOD'], 'uri' => $_SERVER['REQUEST_URI']]);
+
         $this->connectDB();
         $this->createTables();
+    }
+
+    private function log($message, $data = null) {
+        $timestamp = date('Y-m-d H:i:s');
+        $logEntry = "[$timestamp] $message";
+
+        if ($data) {
+            $logEntry .= ' | Data: ' . json_encode($data);
+        }
+
+        $logEntry .= PHP_EOL;
+
+        file_put_contents($this->logFile, $logEntry, FILE_APPEND | LOCK_EX);
     }
 
     private function connectDB() {
@@ -26,7 +43,9 @@ class ReflectionAPI {
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
             ]);
+            $this->log('Database connected successfully');
         } catch (PDOException $e) {
+            $this->log('Database connection failed', ['error' => $e->getMessage()]);
             $this->sendError('Database connection failed', 500);
         }
     }
@@ -47,7 +66,9 @@ class ReflectionAPI {
 
         try {
             $this->db->exec($sql);
+            $this->log('Tables created/verified successfully');
         } catch (PDOException $e) {
+            $this->log('Table creation failed', ['error' => $e->getMessage()]);
             $this->sendError('Table creation failed', 500);
         }
     }
@@ -72,6 +93,8 @@ class ReflectionAPI {
         $method = $_SERVER['REQUEST_METHOD'];
         $userId = $this->getUserId();
 
+        $this->log('Handling request', ['method' => $method, 'user_id' => $userId]);
+
         switch ($method) {
             case 'GET':
                 $this->getReflections($userId);
@@ -83,12 +106,15 @@ class ReflectionAPI {
                 $this->deleteReflection($userId);
                 break;
             default:
+                $this->log('Method not allowed', ['method' => $method]);
                 $this->sendError('Method not allowed', 405);
         }
     }
 
     private function getReflections($userId) {
         try {
+            $this->log('Getting reflections for user', ['user_id' => $userId]);
+
             $stmt = $this->db->prepare("
                 SELECT id, date, date_string, went_well, didnt_go_well, surprises, next_time 
                 FROM reflections 
@@ -112,12 +138,15 @@ class ReflectionAPI {
                 $lastCompleted = $result ? $result['date_string'] : null;
             }
 
+            $this->log('Reflections retrieved successfully', ['count' => count($reflections)]);
+
             $this->sendResponse([
                 'reflections' => $reflections,
                 'lastCompleted' => $lastCompleted
             ]);
 
         } catch (PDOException $e) {
+            $this->log('Failed to fetch reflections', ['error' => $e->getMessage(), 'user_id' => $userId]);
             $this->sendError('Failed to fetch reflections', 500);
         }
     }
@@ -125,7 +154,10 @@ class ReflectionAPI {
     private function saveReflection($userId) {
         $input = json_decode(file_get_contents('php://input'), true);
 
+        $this->log('Saving reflection', ['user_id' => $userId, 'input' => $input]);
+
         if (!$input) {
+            $this->log('Invalid JSON input', ['raw_input' => file_get_contents('php://input')]);
             $this->sendError('Invalid JSON input', 400);
             return;
         }
@@ -133,6 +165,7 @@ class ReflectionAPI {
         $required = ['date', 'dateString'];
         foreach ($required as $field) {
             if (!isset($input[$field])) {
+                $this->log('Missing required field', ['field' => $field, 'input' => $input]);
                 $this->sendError("Missing field: $field", 400);
                 return;
             }
@@ -144,6 +177,7 @@ class ReflectionAPI {
         }
 
         try {
+            // Check for existing reflection on same date
             $stmt = $this->db->prepare("
                 SELECT COUNT(*) 
                 FROM reflections 
@@ -152,6 +186,7 @@ class ReflectionAPI {
             $stmt->execute([$userId, $input['dateString']]);
 
             if ($stmt->fetchColumn() > 0) {
+                $this->log('Reflection already exists for date', ['user_id' => $userId, 'date_string' => $input['dateString']]);
                 $this->sendError('Reflection already exists for this date', 409);
                 return;
             }
@@ -161,7 +196,7 @@ class ReflectionAPI {
                 VALUES (?, ?, ?, ?, ?, ?, ?)
             ");
 
-            $stmt->execute([
+            $result = $stmt->execute([
                 $userId,
                 $input['date'],
                 $input['dateString'],
@@ -171,18 +206,29 @@ class ReflectionAPI {
                 $input['nextTime'] ?? null
             ]);
 
-            $this->sendResponse([
-                'id' => $this->db->lastInsertId(),
-                'message' => 'Reflection saved successfully'
-            ]);
+            if ($result) {
+                $insertId = $this->db->lastInsertId();
+                $this->log('Reflection saved successfully', ['id' => $insertId, 'user_id' => $userId]);
+
+                $this->sendResponse([
+                    'id' => $insertId,
+                    'message' => 'Reflection saved successfully'
+                ]);
+            } else {
+                $this->log('Failed to insert reflection', ['user_id' => $userId]);
+                $this->sendError('Failed to save reflection', 500);
+            }
 
         } catch (PDOException $e) {
-            $this->sendError('Failed to save reflection', 500);
+            $this->log('Database error during save', ['error' => $e->getMessage(), 'user_id' => $userId]);
+            $this->sendError('Failed to save reflection: ' . $e->getMessage(), 500);
         }
     }
 
     private function updateReflection($userId, $id, $input) {
         try {
+            $this->log('Updating reflection', ['id' => $id, 'user_id' => $userId]);
+
             $stmt = $this->db->prepare("
                 UPDATE reflections 
                 SET went_well = ?, didnt_go_well = ?, surprises = ?, next_time = ?
@@ -199,13 +245,16 @@ class ReflectionAPI {
             ]);
 
             if ($stmt->rowCount() === 0) {
+                $this->log('Reflection not found for update', ['id' => $id, 'user_id' => $userId]);
                 $this->sendError('Reflection not found or access denied', 404);
                 return;
             }
 
+            $this->log('Reflection updated successfully', ['id' => $id]);
             $this->sendResponse(['message' => 'Reflection updated successfully']);
 
         } catch (PDOException $e) {
+            $this->log('Failed to update reflection', ['error' => $e->getMessage(), 'id' => $id]);
             $this->sendError('Failed to update reflection', 500);
         }
     }
@@ -213,39 +262,50 @@ class ReflectionAPI {
     private function deleteReflection($userId) {
         if (isset($_GET['id'])) {
             try {
+                $this->log('Deleting single reflection', ['id' => $_GET['id'], 'user_id' => $userId]);
+
                 $stmt = $this->db->prepare("DELETE FROM reflections WHERE id = ? AND user_id = ?");
                 $stmt->execute([$_GET['id'], $userId]);
 
                 if ($stmt->rowCount() === 0) {
+                    $this->log('Reflection not found for deletion', ['id' => $_GET['id'], 'user_id' => $userId]);
                     $this->sendError('Reflection not found or access denied', 404);
                     return;
                 }
 
+                $this->log('Reflection deleted successfully', ['id' => $_GET['id']]);
                 $this->sendResponse(['message' => 'Reflection deleted successfully']);
 
             } catch (PDOException $e) {
+                $this->log('Failed to delete reflection', ['error' => $e->getMessage(), 'id' => $_GET['id']]);
                 $this->sendError('Failed to delete reflection', 500);
             }
         } else {
             try {
+                $this->log('Deleting all reflections', ['user_id' => $userId]);
+
                 $stmt = $this->db->prepare("DELETE FROM reflections WHERE user_id = ?");
                 $stmt->execute([$userId]);
 
+                $this->log('All reflections deleted', ['count' => $stmt->rowCount()]);
                 $this->sendResponse(['message' => 'All reflections deleted successfully']);
 
             } catch (PDOException $e) {
+                $this->log('Failed to delete all reflections', ['error' => $e->getMessage(), 'user_id' => $userId]);
                 $this->sendError('Failed to delete reflections', 500);
             }
         }
     }
 
     private function sendResponse($data, $code = 200) {
+        $this->log('Sending response', ['code' => $code, 'data' => $data]);
         http_response_code($code);
         echo json_encode($data);
         exit();
     }
 
     private function sendError($message, $code = 400) {
+        $this->log('Sending error', ['code' => $code, 'message' => $message]);
         http_response_code($code);
         echo json_encode(['error' => $message]);
         exit();
@@ -254,3 +314,4 @@ class ReflectionAPI {
 
 $api = new ReflectionAPI();
 $api->handleRequest();
+?>
