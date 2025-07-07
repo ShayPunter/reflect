@@ -197,6 +197,17 @@ class ReflectionAPI {
             }
         }
 
+        // Convert ISO date to MySQL datetime format
+        try {
+            $dateTime = new DateTime($input['date']);
+            $mysqlDate = $dateTime->format('Y-m-d H:i:s');
+            $this->log('Date conversion', ['original' => $input['date'], 'mysql_format' => $mysqlDate]);
+        } catch (Exception $e) {
+            $this->log('Invalid date format', ['date' => $input['date'], 'error' => $e->getMessage()]);
+            $this->sendError('Invalid date format', 400);
+            return;
+        }
+
         if (isset($_GET['id'])) {
             $this->updateReflection($userId, $_GET['id'], $input);
             return;
@@ -224,7 +235,7 @@ class ReflectionAPI {
 
             $result = $stmt->execute([
                 $userId,
-                $input['date'],
+                $mysqlDate, // Use converted MySQL format
                 $input['dateString'],
                 $input['wentWell'] ?? null,
                 $input['didntGoWell'] ?? null,
