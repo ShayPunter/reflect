@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Reflection</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: white;
+            color: #333;
+            line-height: 1.6;
+            padding: 40px 20px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .title {
+            font-size: 1.8rem;
+            font-weight: 300;
+            color: #000;
+            margin-bottom: 8px;
+        }
+
+        .status {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .completed {
+            background: #f5f5f5;
+            color: #333;
+            padding: 20px;
+            border: 1px solid #ddd;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            background: #fafafa;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            display: block;
+            font-size: 2rem;
+            font-weight: 200;
+            color: #000;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .form-group {
+            margin-bottom: 30px;
+        }
+
+        .label {
+            display: block;
+            font-size: 0.9rem;
+            color: #000;
+            margin-bottom: 8px;
+            font-weight: 400;
+        }
+
+        .input {
+            width: 100%;
+            min-height: 80px;
+            padding: 15px;
+            border: 2px solid #000;
+            background: white;
+            font-size: 1rem;
+            font-family: inherit;
+            resize: vertical;
+            transition: none;
+        }
+
+        .input:focus {
+            outline: none;
+            background: #fafafa;
+        }
+
+        .btn {
+            background: #000;
+            color: white;
+            border: 2px solid #000;
+            padding: 12px 24px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            margin-right: 15px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: none;
+        }
+
+        .btn:hover {
+            background: white;
+            color: #000;
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            border-color: #ccc;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        .btn:disabled:hover {
+            background: #ccc;
+            color: #666;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #000;
+            border: 2px solid #000;
+        }
+
+        .btn-secondary:hover {
+            background: #000;
+            color: white;
+        }
+
+        .entries {
+            margin-top: 40px;
+        }
+
+        .entry {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: #fafafa;
+        }
+
+        .entry-date {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .entry-item {
+            margin-bottom: 12px;
+            font-size: 0.9rem;
+        }
+
+        .entry-label {
+            font-weight: 600;
+            color: #000;
+            margin-bottom: 4px;
+        }
+
+        .entry-text {
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.7rem;
+        }
+
+        .management-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #000;
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .management-toggle:hover {
+            background: #333;
+        }
+
+        .management-panel {
+            position: fixed;
+            top: 0;
+            right: -300px;
+            width: 280px;
+            height: 100vh;
+            background: white;
+            border-left: 2px solid #000;
+            padding: 20px;
+            transition: right 0.3s ease;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .management-panel.open {
+            right: 0;
+        }
+
+        .management-header {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #000;
+        }
+
+        .management-section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .management-section:last-child {
+            border-bottom: none;
+        }
+
+        .management-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #000;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .file-input {
+            margin-bottom: 10px;
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 20px 15px;
+            }
+
+            .stats {
+                gap: 20px;
+            }
+
+            .management-panel {
+                width: 100%;
+                right: -100%;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1 class="title">Daily Reflection</h1>
+    <div id="status" class="status"></div>
+</div>
+
+<div id="completedMessage" class="completed hidden">
+    Today's reflection completed. Return tomorrow.
+</div>
+
+<div id="statsSection" class="stats hidden">
+    <div class="stat">
+        <span id="totalEntries" class="stat-number">0</span>
+        <span class="stat-label">Total</span>
+    </div>
+    <div class="stat">
+        <span id="currentStreak" class="stat-number">0</span>
+        <span class="stat-label">Streak</span>
+    </div>
+</div>
+
+<form id="reflectionForm">
+    <div class="form-group">
+        <label class="label" for="wentWell">What went well?</label>
+        <textarea id="wentWell" class="input"></textarea>
+    </div>
+
+    <div class="form-group">
+        <label class="label" for="didntGoWell">What didn't go well?</label>
+        <textarea id="didntGoWell" class="input"></textarea>
+    </div>
+
+    <div class="form-group">
+        <label class="label" for="surprises">Any surprises?</label>
+        <textarea id="surprises" class="input"></textarea>
+    </div>
+
+    <div class="form-group">
+        <label class="label" for="nextTime">How could you handle that differently next time?</label>
+        <textarea id="nextTime" class="input"></textarea>
+    </div>
+
+    <button type="submit" class="btn">Submit</button>
+    <button type="button" id="notifyBtn" class="btn btn-secondary">Enable Reminders</button>
+</form>
+
+<div id="entriesSection" class="entries hidden"></div>
+
+<button class="management-toggle" onclick="app.toggleManagement()">⚙</button>
+
+<div id="managementPanel" class="management-panel">
+    <div class="management-header">Data Management</div>
+
+    <div class="management-section">
+        <div class="management-title">Export</div>
+        <button type="button" id="exportBtn" class="btn btn-secondary btn-small">JSON</button>
+        <button type="button" id="exportCsvBtn" class="btn btn-secondary btn-small">CSV</button>
+        <button type="button" id="exportTextBtn" class="btn btn-secondary btn-small">Text</button>
+    </div>
+
+    <div class="management-section">
+        <div class="management-title">Import</div>
+        <input type="file" id="importFile" accept=".json,.csv,.txt" class="file-input">
+        <button type="button" id="importBtn" class="btn btn-secondary btn-small">Import File</button>
+    </div>
+
+    <div class="management-section">
+        <div class="management-title">View</div>
+        <button type="button" id="viewBtn" class="btn btn-secondary btn-small">Show Entries</button>
+    </div>
+
+    <div class="management-section">
+        <div class="management-title">Reset</div>
+        <button type="button" id="clearBtn" class="btn btn-secondary btn-small">Clear All Data</button>
+    </div>
+</div>
+
+<script>
+    class ReflectionApp {
+        constructor() {
+            this.apiEndpoint = '/api/reflections'; // Configure your server endpoint
+            this.entries = [];
+            this.lastCompleted = null;
+            this.notificationsEnabled = localStorage.getItem('notificationsEnabled') === 'true';
+            this.init();
+        }
+
+        async init() {
+            this.setupEvents();
+            await this.loadFromServer();
+            this.updateUI();
+            this.checkToday();
+            this.updateStats();
+
+            if (this.notificationsEnabled) {
+                this.scheduleNotification();
+            }
+        }
+
+        // Server communication methods
+        async loadFromServer() {
+            try {
+                const response = await fetch(this.apiEndpoint);
+                if (response.ok) {
+                    const data = await response.json();
+                    this.entries = data.reflections || [];
+                    this.lastCompleted = data.lastCompleted;
+                    return;
+                }
+            } catch (error) {
+                console.warn('Server unavailable, using local storage');
+            }
+            this.loadFromLocal();
+        }
+
+        async saveToServer(data) {
+            try {
+                const response = await fetch(this.apiEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    return;
+                }
+            } catch (error) {
+                console.warn('Server save failed, using local storage');
+            }
+            this.saveToLocal();
+        }
+
+        loadFromLocal() {
+            try {
+                this.entries = JSON.parse(localStorage.getItem('reflections') || '[]');
+                this.lastCompleted = localStorage.getItem('lastCompleted');
+            } catch {
+                this.entries = [];
+            }
+        }
+
+        saveToLocal() {
+            localStorage.setItem('reflections', JSON.stringify(this.entries));
+            if (this.lastCompleted) {
+                localStorage.setItem('lastCompleted', this.lastCompleted);
+            }
+        }
+
+        setupEvents() {
+            document.getElementById('reflectionForm').onsubmit = (e) => {
+                e.preventDefault();
+                this.saveReflection();
+            };
+
+            document.getElementById('notifyBtn').onclick = () => this.enableNotifications();
+            document.getElementById('exportBtn').onclick = () => this.export('json');
+            document.getElementById('exportCsvBtn').onclick = () => this.export('csv');
+            document.getElementById('exportTextBtn').onclick = () => this.export('text');
+            document.getElementById('importBtn').onclick = () => this.import();
+            document.getElementById('viewBtn').onclick = () => this.toggleView();
+            document.getElementById('clearBtn').onclick = () => this.clearAll();
+        }
+
+        checkToday() {
+            const today = new Date().toDateString();
+            const completed = this.lastCompleted === today;
+
+            if (completed) {
+                document.getElementById('reflectionForm').classList.add('hidden');
+                document.getElementById('completedMessage').classList.remove('hidden');
+            } else {
+                document.getElementById('reflectionForm').classList.remove('hidden');
+                document.getElementById('completedMessage').classList.add('hidden');
+            }
+        }
+
+        async saveReflection() {
+            const data = {
+                date: new Date().toISOString(),
+                dateString: new Date().toDateString(),
+                wentWell: document.getElementById('wentWell').value,
+                didntGoWell: document.getElementById('didntGoWell').value,
+                surprises: document.getElementById('surprises').value,
+                nextTime: document.getElementById('nextTime').value
+            };
+
+            if (!data.wentWell && !data.didntGoWell && !data.surprises && !data.nextTime) {
+                alert('Please fill in at least one field.');
+                return;
+            }
+
+            this.entries.unshift(data);
+            this.lastCompleted = data.dateString;
+
+            await this.saveToServer(data);
+
+            document.getElementById('reflectionForm').reset();
+            this.checkToday();
+            this.updateStats();
+        }
+
+        async enableNotifications() {
+            if (!('Notification' in window)) {
+                alert('Notifications not supported');
+                return;
+            }
+
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+                this.notificationsEnabled = true;
+                localStorage.setItem('notificationsEnabled', 'true');
+                this.updateUI();
+                this.scheduleNotification();
+            }
+        }
+
+        scheduleNotification() {
+            if (!this.notificationsEnabled) return;
+
+            const now = new Date();
+            const next = new Date(now);
+            next.setDate(next.getDate() + 1);
+            next.setHours(20, 0, 0, 0);
+
+            const delay = next.getTime() - now.getTime();
+
+            setTimeout(() => {
+                if (Notification.permission === 'granted') {
+                    new Notification('Daily Reflection', {
+                        body: 'Time for your daily reflection'
+                    });
+                }
+                this.scheduleNotification();
+            }, delay);
+        }
+
+        updateUI() {
+            const status = document.getElementById('status');
+            status.textContent = this.notificationsEnabled ?
+                'Daily reminders enabled' :
+                'Enable reminders for daily notifications';
+
+            if (this.notificationsEnabled) {
+                document.getElementById('notifyBtn').style.display = 'none';
+            }
+        }
+
+        updateStats() {
+            const total = this.entries.length;
+            document.getElementById('totalEntries').textContent = total;
+
+            let streak = 0;
+            const today = new Date();
+
+            for (let i = 0; i < this.entries.length; i++) {
+                const entryDate = new Date(this.entries[i].date);
+                const daysDiff = Math.floor((today - entryDate) / (1000 * 60 * 60 * 24));
+
+                if (daysDiff === i) {
+                    streak++;
+                } else {
+                    break;
+                }
+            }
+
+            document.getElementById('currentStreak').textContent = streak;
+
+            if (total > 0) {
+                document.getElementById('statsSection').classList.remove('hidden');
+            }
+        }
+
+        toggleManagement() {
+            const panel = document.getElementById('managementPanel');
+            panel.classList.toggle('open');
+        }
+
+        export(format) {
+            if (this.entries.length === 0) {
+                alert('No data to export');
+                return;
+            }
+
+            let content, filename, type;
+
+            if (format === 'json') {
+                content = JSON.stringify(this.entries, null, 2);
+                filename = 'reflections.json';
+                type = 'application/json';
+            } else if (format === 'csv') {
+                const headers = 'Date,Went Well,Didn\'t Go Well,Surprises,Next Time\n';
+                const rows = this.entries.map(entry => {
+                    const date = new Date(entry.date).toLocaleDateString();
+                    const escape = (str) => '"' + (str || '').replace(/"/g, '""') + '"';
+                    return [date, entry.wentWell, entry.didntGoWell, entry.surprises, entry.nextTime]
+                        .map(escape).join(',');
+                }).join('\n');
+                content = headers + rows;
+                filename = 'reflections.csv';
+                type = 'text/csv';
+            } else {
+                content = this.entries.map(entry => {
+                    const date = new Date(entry.date).toLocaleDateString();
+                    return `Date: ${date}\n` +
+                        `Went well: ${entry.wentWell || 'N/A'}\n` +
+                        `Didn't go well: ${entry.didntGoWell || 'N/A'}\n` +
+                        `Surprises: ${entry.surprises || 'N/A'}\n` +
+                        `Next time: ${entry.nextTime || 'N/A'}\n` +
+                        '---\n';
+                }).join('\n');
+                filename = 'reflections.txt';
+                type = 'text/plain';
+            }
+
+            const blob = new Blob([content], { type });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        async import() {
+            const file = document.getElementById('importFile').files[0];
+            if (!file) {
+                alert('Please select a file');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (Array.isArray(data)) {
+                        this.entries = [...data, ...this.entries];
+                        await this.saveToServer();
+                        this.updateStats();
+                        alert('Data imported successfully');
+                    } else {
+                        alert('Invalid file format');
+                    }
+                } catch {
+                    alert('Error reading file');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        toggleView() {
+            const section = document.getElementById('entriesSection');
+            const btn = document.getElementById('viewBtn');
+
+            if (section.classList.contains('hidden')) {
+                this.renderEntries();
+                section.classList.remove('hidden');
+                btn.textContent = 'Hide Entries';
+            } else {
+                section.classList.add('hidden');
+                btn.textContent = 'Show Entries';
+            }
+        }
+
+        renderEntries() {
+            const section = document.getElementById('entriesSection');
+
+            if (this.entries.length === 0) {
+                section.innerHTML = '<p>No entries yet</p>';
+                return;
+            }
+
+            section.innerHTML = this.entries.map((entry, index) => `
+                    <div class="entry">
+                        <div class="entry-date">
+                            ${new Date(entry.date).toLocaleDateString()}
+                            <button class="btn btn-secondary btn-small" onclick="app.deleteEntry(${index})">Delete</button>
+                        </div>
+                        ${entry.wentWell ? `<div class="entry-item"><div class="entry-label">Went well</div><div class="entry-text">${entry.wentWell}</div></div>` : ''}
+                        ${entry.didntGoWell ? `<div class="entry-item"><div class="entry-label">Didn't go well</div><div class="entry-text">${entry.didntGoWell}</div></div>` : ''}
+                        ${entry.surprises ? `<div class="entry-item"><div class="entry-label">Surprises</div><div class="entry-text">${entry.surprises}</div></div>` : ''}
+                        ${entry.nextTime ? `<div class="entry-item"><div class="entry-label">Next time</div><div class="entry-text">${entry.nextTime}</div></div>` : ''}
+                    </div>
+                `).join('');
+        }
+
+        async deleteEntry(index) {
+            if (confirm('Delete this entry?')) {
+                const entry = this.entries[index];
+                try {
+                    const response = await fetch(`${this.apiEndpoint}?id=${entry.id}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (response.ok) {
+                        this.entries.splice(index, 1);
+                        this.renderEntries();
+                        this.updateStats();
+                        return;
+                    }
+                } catch (error) {
+                    console.warn('Server delete failed, using local storage');
+                }
+
+                this.entries.splice(index, 1);
+                this.saveToLocal();
+                this.renderEntries();
+                this.updateStats();
+            }
+        }
+
+        async clearAll() {
+            if (confirm('Delete all data? This cannot be undone.')) {
+                try {
+                    const response = await fetch(this.apiEndpoint, {
+                        method: 'DELETE'
+                    });
+
+                    if (response.ok) {
+                        this.entries = [];
+                        this.lastCompleted = null;
+                        localStorage.clear();
+                        this.updateStats();
+                        this.checkToday();
+                        document.getElementById('entriesSection').classList.add('hidden');
+                        document.getElementById('viewBtn').textContent = 'Show Entries';
+                        return;
+                    }
+                } catch (error) {
+                    console.warn('Server clear failed, using local storage');
+                }
+
+                this.entries = [];
+                this.lastCompleted = null;
+                localStorage.clear();
+                this.updateStats();
+                this.checkToday();
+                document.getElementById('entriesSection').classList.add('hidden');
+                document.getElementById('viewBtn').textContent = 'Show Entries';
+            }
+        }
+    }
+
+    const app = new ReflectionApp();
+</script>
+</body>
+</html>
